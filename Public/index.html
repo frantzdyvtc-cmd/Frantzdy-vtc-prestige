@@ -11,7 +11,7 @@ div class="form-section">
     <h3 id="result"></h3>
 </div>
 
-<script>
+<script>const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
 async function geocode(address) {
     const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
     const res = await fetch(url);
