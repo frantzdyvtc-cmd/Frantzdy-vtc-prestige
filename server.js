@@ -1,11 +1,12 @@
 const express = require("express");
 const axios = require("axios");
-const app = express();
-const path = require("path");
+const cors = require("cors");
 require("dotenv").config();
 
+const app = express();
+
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
 
 app.post("/api/calc-distance", async (req, res) => {
     const { start, end } = req.body;
@@ -13,9 +14,7 @@ app.post("/api/calc-distance", async (req, res) => {
     try {
         const response = await axios.post(
             "https://api.openrouteservice.org/v2/directions/driving-car",
-            {
-                coordinates: [start, end]
-            },
+            { coordinates: [start, end] },
             {
                 headers: {
                     Authorization: process.env.ORS_API_KEY,
@@ -24,7 +23,8 @@ app.post("/api/calc-distance", async (req, res) => {
             }
         );
 
-        const distanceMeters = response.data.features[0].properties.summary.distance;
+        const distanceMeters =
+            response.data.features[0].properties.summary.distance;
         const distanceKm = distanceMeters / 1000;
 
         res.json({ distanceKm });
@@ -34,6 +34,5 @@ app.post("/api/calc-distance", async (req, res) => {
     }
 });
 
-app.listen(10000, () => {
-    console.log("Serveur en ligne sur port 10000");
-});
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("Serveur API opérationnel sur le port " + PORT));
