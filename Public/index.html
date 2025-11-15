@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>FRANTZDY VTC PRESTIGE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>FRANTZDY VTC PRESTIGE</h1>
+    <p>Votre chauffeur de qualité</p>
+  </header>
+
+  <section class="reservation">
+    <h2>Réserver une course</h2>
+    <label>Distance (km) :</label>
+    <input type="number" id="distance">
+
+    <label>Minutes d’attente :</label>
+    <input type="number" id="waiting">
+
+    <label>Type de véhicule :</label>
+    <select id="vehicule">
+      <option value="van">VAN – 2,08€/km (min 60€)</option>
+      <option value="berline">Berline – 1,80€/km (min 50€)</option>
+      <option value="eco">Eco – 1,56€/km (min 40€)</option>
+    </select>
+
+    <button onclick="calculer()">Calculer le prix</button>
+    <p id="prix"></p>
+    <button onclick="payer()">Payer maintenant</button>
+  </section>
+
+  <section class="contact">
+    <h2>Contact</h2>
+    <p>Téléphone : 0668018398</p>
+    <p>Email : frantzdyvtc@gmail.com</p>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
