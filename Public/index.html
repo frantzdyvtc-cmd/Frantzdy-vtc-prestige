@@ -68,13 +68,10 @@ async function calculate() {
     const start = await geocode(startAddress);
     const end = await geocode(endAddress);
 
-    const res = await fetch("/api/calc-distance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start, end })
-    });
-
-    const data = await res.json();
+    const res = await fetch("https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance", {
+    method: "POST",headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ start, end })
+});
 
     const km = data.distanceKm;
     const price = km * 2.08;
