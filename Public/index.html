@@ -48,22 +48,34 @@
     </div>
 
 <script>
+// ⚠️ Clé ORS (geocoding)
 const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
 
+// Convertit une adresse en coordonnées
 async function geocode(address) {
     const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
+
     const res = await fetch(url);
     const data = await res.json();
+
     return data.features[0].geometry.coordinates;  // [lon, lat]
 }
 
+// Calcul du prix
 async function calculate() {
     const startAddress = document.getElementById("start").value;
     const endAddress = document.getElementById("end").value;
 
+    if (!startAddress || !endAddress) {
+        alert("Veuillez entrer deux adresses");
+        return;
+    }
+
+    // Geocodage
     const start = await geocode(startAddress);
     const end = await geocode(endAddress);
 
+    // Appel de l'API backend Render
     const res = await fetch("https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,6 +83,11 @@ async function calculate() {
     });
 
     const data = await res.json();
+
+    if (!data.distanceKm) {
+        document.getElementById("result").innerHTML = "Erreur : Impossible de calculer la distance.";
+        return;
+    }
 
     const km = data.distanceKm;
     const price = km * 2.08;
