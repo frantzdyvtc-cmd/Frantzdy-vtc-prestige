@@ -1,4 +1,44 @@
-div class="form-section">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frantzdy VTC Prestige</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: black;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Calculateur de prix — Frantzdy VTC Prestige</h2>
+
+<div class="form-section">
     <input id="start" type="text" placeholder="Adresse de départ">
     <input id="end" type="text" placeholder="Adresse d’arrivée">
 
@@ -11,7 +51,9 @@ div class="form-section">
     <h3 id="result"></h3>
 </div>
 
-<script>const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
+<script>
+const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
+
 async function geocode(address) {
     const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
     const res = await fetch(url);
@@ -35,11 +77,12 @@ async function calculate() {
     const data = await res.json();
 
     const km = data.distanceKm;
-    const price = km * 2.08; // ton tarif
+    const price = km * 2.08;
 
     document.getElementById("result").innerHTML =
         `Distance : ${km.toFixed(1)} km<br>Prix estimé : ${price.toFixed(2)} €`;
 }
 </script>
+
 </body>
 </html>
