@@ -48,20 +48,10 @@
     </div>
 
 <script>
-// ⚠️ Clé ORS (geocoding)
-const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
+// On passe maintenant par TON backend pour géocoder + router
+const API_URL = "https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance";
 
-// Convertit une adresse en coordonnées
-async function geocode(address) {
-    const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    return data.features[0].geometry.coordinates;  // [lon, lat]
-}
-
-// Calcul du prix
+// NOUVELLE FONCTION : envoie les adresses texte au backend
 async function calculate() {
     const startAddress = document.getElementById("start").value;
     const endAddress = document.getElementById("end").value;
@@ -71,29 +61,34 @@ async function calculate() {
         return;
     }
 
-    // Geocodage
-    const start = await geocode(startAddress);
-    const end = await geocode(endAddress);
+    document.getElementById("result").innerHTML = "Calcul en cours...";
 
-    // Appel de l'API backend Render
-    const res = await fetch("https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start, end })
-    });
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                startAddress, 
+                endAddress 
+            })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!data.distanceKm) {
-        document.getElementById("result").innerHTML = "Erreur : Impossible de calculer la distance.";
-        return;
+        if (!data.distanceKm) {
+            document.getElementById("result").innerHTML = "Erreur : impossible de calculer la distance.";
+            return;
+        }
+
+        const km = data.distanceKm;
+        const price = km * 2.08;
+
+        document.getElementById("result").innerHTML =
+            `Distance : ${km.toFixed(1)} km<br>Prix estimé : ${price.toFixed(2)} €`;
+
+    } catch (err) {
+        document.getElementById("result").innerHTML = "Erreur de communication avec le serveur.";
     }
-
-    const km = data.distanceKm;
-    const price = km * 2.08;
-
-    document.getElementById("result").innerHTML =
-        `Distance : ${km.toFixed(1)} km<br>Prix estimé : ${price.toFixed(2)} €`;
 }
 </script>
 
