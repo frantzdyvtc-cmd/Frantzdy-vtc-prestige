@@ -1,14 +1,14 @@
 {
-  "name": "frantzdy-vtc-prestige-api",
+  "name": "frantzdy-vtc-api",
   "version": "1.0.0",
   "main": "server.js",
-  "type": "commonjs",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "dotenv": "^16.3.1",
-    "axios": "^1.6.0"
+    "dotenv": "^16.3.1"
   }
 }
