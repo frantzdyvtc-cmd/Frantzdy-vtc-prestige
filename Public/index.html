@@ -1,55 +1,51 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frantzdy VTC Prestige</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculateur de prix — Frantzdy VTC Prestige</title>
 
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            margin: 40px;
         }
-
         .form-section {
-            margin-bottom: 20px;
+            max-width: 400px;
         }
-
         input, select, button {
-            padding: 10px;
-            margin: 5px;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
             font-size: 16px;
         }
-
         button {
-            background-color: black;
+            background-color: #222;
             color: white;
-            cursor: pointer;
             border: none;
+            cursor: pointer;
         }
-
-        button:hover {
-            opacity: 0.8;
+        h3 {
+            margin-top: 20px;
         }
     </style>
 </head>
 
 <body>
+    <h1>Calculateur de prix —<br> Frantzdy VTC Prestige</h1>
 
-<h2>Calculateur de prix — Frantzdy VTC Prestige</h2>
+    <div class="form-section">
+        <input id="start" type="text" placeholder="Adresse de départ">
+        <input id="end" type="text" placeholder="Adresse d’arrivée">
 
-<div class="form-section">
-    <input id="start" type="text" placeholder="Adresse de départ">
-    <input id="end" type="text" placeholder="Adresse d’arrivée">
+        <select id="vehicle">
+            <option value="van">VAN haut de gamme</option>
+        </select>
 
-    <select id="vehicle">
-        <option value="van">VAN haut de gamme</option>
-    </select>
+        <button onclick="calculate()">Calculer le prix</button>
 
-    <button onclick="calculate()">Calculer le prix</button>
-
-    <h3 id="result"></h3>
-</div>
+        <h3 id="result"></h3>
+    </div>
 
 <script>
 const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA1ZDBmMDljMjllYjRiMjI5NzVkNzZhZWVhZGUwNTU3IiwiaCI6Im11cm11cjY0In0=";
@@ -58,7 +54,7 @@ async function geocode(address) {
     const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.features[0].geometry.coordinates; // [lon, lat]
+    return data.features[0].geometry.coordinates;  // [lon, lat]
 }
 
 async function calculate() {
@@ -69,9 +65,12 @@ async function calculate() {
     const end = await geocode(endAddress);
 
     const res = await fetch("https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance", {
-    method: "POST",headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, end })
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ start, end })
+    });
+
+    const data = await res.json();
 
     const km = data.distanceKm;
     const price = km * 2.08;
