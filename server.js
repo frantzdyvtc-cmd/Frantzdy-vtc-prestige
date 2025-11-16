@@ -9,7 +9,7 @@ app.use(express.json());
 
 const ORS_API_KEY = process.env.ORS_API_KEY;
 
-// Fonction pour géocoder une adresse
+// Fonction pour convertir une adresse en coordonnées
 async function geocode(address) {
     const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(address)}`;
     const response = await axios.get(url);
@@ -20,15 +20,15 @@ app.post("/api/calc-distance", async (req, res) => {
     const { startAddress, endAddress } = req.body;
 
     if (!startAddress || !endAddress) {
-        return res.status(400).json({ error: "Les adresses sont requises." });
+        return res.status(400).json({ error: "Les adresses sont obligatoires." });
     }
 
     try {
-        // 1 - Géocodage des deux adresses
+        // 1️⃣ Géocodage des adresses
         const startCoord = await geocode(startAddress);
         const endCoord = await geocode(endAddress);
 
-        // 2 - Calcul de l'itinéraire
+        // 2️⃣ Calcul de l'itinéraire
         const response = await axios.post(
             "https://api.openrouteservice.org/v2/directions/driving-car",
             { coordinates: [startCoord, endCoord] },
@@ -42,7 +42,7 @@ app.post("/api/calc-distance", async (req, res) => {
 
         const distanceMeters = response.data.features[0].properties.summary.distance;
         const distanceKm = distanceMeters / 1000;
-        const price = distanceKm * 2.08; // Ton tarif
+        const price = distanceKm * 2.08; // Ton tarif km
 
         res.json({ distanceKm, price });
 
@@ -53,4 +53,4 @@ app.post("/api/calc-distance", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("API prête sur le port " + PORT));
+app.listen(PORT, () => console.log("Serveur API opérationnel sur le port " + PORT));
