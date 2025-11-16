@@ -9,34 +9,48 @@
         body {
             font-family: Arial, sans-serif;
             margin: 40px;
+            text-align: center;
         }
         .form-section {
             max-width: 400px;
+            margin: auto;
+            text-align: left;
         }
         input, select, button {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
             font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #aaa;
         }
         button {
-            background-color: #222;
+            background-color: #000;
             color: white;
             border: none;
             cursor: pointer;
+            font-weight: bold;
         }
-        h3 {
+        button:hover {
+            background-color: #333;
+        }
+        #result {
+            font-size: 18px;
             margin-top: 20px;
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 6px;
         }
     </style>
 </head>
 
 <body>
-    <h1>Calculateur de prix —<br> Frantzdy VTC Prestige</h1>
+    <h1>🚖 Frantzdy VTC Prestige</h1>
+    <h2>Calculateur de prix</h2>
 
     <div class="form-section">
-        <input id="start" type="text" placeholder="Adresse de départ">
-        <input id="end" type="text" placeholder="Adresse d’arrivée">
+        <input id="start" type="text" placeholder="Adresse de départ (ex: 2 place Pablo Picasso, Champ-sur-Marne)">
+        <input id="end" type="text" placeholder="Adresse d’arrivée (ex: Tour Eiffel, Paris)">
 
         <select id="vehicle">
             <option value="van">VAN haut de gamme</option>
@@ -48,46 +62,41 @@
     </div>
 
 <script>
-// On passe maintenant par TON backend pour géocoder + router
 const API_URL = "https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance";
 
-// NOUVELLE FONCTION : envoie les adresses texte au backend
 async function calculate() {
     const startAddress = document.getElementById("start").value;
     const endAddress = document.getElementById("end").value;
+    const result = document.getElementById("result");
 
     if (!startAddress || !endAddress) {
-        alert("Veuillez entrer deux adresses");
+        result.innerHTML = "<span style='color:red;'>Veuillez entrer deux adresses.</span>";
         return;
     }
 
-    document.getElementById("result").innerHTML = "Calcul en cours...";
+    result.innerHTML = "⏳ Calcul en cours...";
 
     try {
         const res = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                startAddress, 
-                endAddress 
-            })
+            body: JSON.stringify({ startAddress, endAddress })
         });
 
         const data = await res.json();
 
         if (!data.distanceKm) {
-            document.getElementById("result").innerHTML = "Erreur : impossible de calculer la distance.";
+            result.innerHTML = "<span style='color:red;'>Erreur : impossible de calculer la distance.</span>";
             return;
         }
 
-        const km = data.distanceKm;
-        const price = km * 2.08;
+        result.innerHTML = `
+            📍 Distance : <b>${data.distanceKm.toFixed(1)} km</b><br>
+            💰 Prix estimé : <b>${data.price.toFixed(2)} €</b>
+        `;
 
-        document.getElementById("result").innerHTML =
-            `Distance : ${km.toFixed(1)} km<br>Prix estimé : ${price.toFixed(2)} €`;
-
-    } catch (err) {
-        document.getElementById("result").innerHTML = "Erreur de communication avec le serveur.";
+    } catch (error) {
+        result.innerHTML = "<span style='color:red;'>Erreur de communication avec le serveur.</span>";
     }
 }
 </script>
