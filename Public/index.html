@@ -1,99 +1,99 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frantzdy VTC Prestige - Calculateur de prix</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+require("dotenv").config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Geocoding OpenRouteService request
+async function geocode(address) {
+  try {
+    const url = `https://api.openrouteservice.org/geocode/search?api_key=${process.env.ORS_API_KEY}&text=${encodeURIComponent(address)}`;
+    const res = await axios.get(url);
+
+    if (
+      !res.data.features ||
+      res.data.features.length === 0 ||
+      !res.data.features[0].geometry
+    ) {
+      return null;
     }
-    input, select, button {
-      width: 90%;
-      padding: 14px;
-      margin: 10px 0;
-      font-size: 18px;
-    }
-    button {
-      background: black;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .result, .error {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .error {
-      color: red;
-    }
-  </style>
-</head>
-<body>
 
-  <h1>🚖 Frantzdy VTC Prestige</h1>
-  <h2>Calculateur de prix</h2>
+    const [lon, lat] = res.data.features[0].geometry.coordinates;
+    return { lat, lon };
+  } catch (error) {
+    console.error("Geocode error:", error.response?.data || error);
+    return null;
+  }
+}
 
-  <input id="start" placeholder="Adresse de départ" />
-  <input id="end" placeholder="Adresse d'arrivée" />
-  
-  <select id="type">
-    <option value="berline">Berline</option>
-    <option value="van">VAN haut de gamme</option>
-  </select>
+app.post("/api/calc", async (req, res) => {
+  const { start, end, type } = req.body;
 
-  <button onclick="calculate()">Calculer le prix</button>
+  if (!start || !end || !type) return res.status(400).json({ error: "Missing fields" });
 
-  <div id="result" class="result"></div>
-  <div id="error" class="error"></div>
+  // Convert addresses to coordinates
+  const startCoord = await geocode(start);
+  const endCoord = await geocode(end);
 
-  <script>
-    const API_URL = "https://frantzdy-vtc-prestige-api.onrender.com/api/calc-distance";
+  if (!startCoord || !endCoord) {
+    return res.status(500).json({ error: "Adresse non trouvée" });
+  }
 
-    async function calculate() {
-      const start = document.getElementById("start").value.trim();
-      const end = document.getElementById("end").value.trim();
-      const type = document.getElementById("type").value;
-
-      document.getElementById("result").innerHTML = "";
-      document.getElementById("error").innerHTML = "";
-
-      if (!start || !end) {
-        document.getElementById("error").innerHTML = "Veuillez entrer deux adresses.";
-        return;
-      }
-
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ start, end })
-        });
-
-        const data = await res.json();
-
-        if (!data.distanceKm || !data.durationMin) {
-          throw new Error();
+  try {
+    // Route request
+    const orsResponse = await axios.post(
+      "https://api.openrouteservice.org/v2/directions/driving-car",
+      {
+        coordinates: [
+          [startCoord.lon, startCoord.lat],
+          [endCoord.lon, endCoord.lat]
+        ]
+      },
+      {
+        headers: {
+          Authorization: process.env.ORS_API_KEY,
+          "Content-Type": "application/json"
         }
-
-        const distance = data.distanceKm;
-        const duration = data.durationMin;
-
-        let pricePerKm = type === "van" ? 2.2 : 1.7;
-        let price = distance * pricePerKm;
-
-        document.getElementById("result").innerHTML =
-          `Distance : <b>${distance.toFixed(1)} km</b><br>` +
-          `Durée estimée : <b>${duration} min</b><br>` +
-          `Prix estimé : <b>${price.toFixed(2)} €</b>`;
-      } catch {
-        document.getElementById("error").innerHTML =
-          "Erreur : impossible de calculer la distance.";
       }
+    );
+
+    const summary = orsResponse.data.features[0].properties.summary;
+    const distanceKm = summary.distance / 1000;
+    const durationMin = Math.round(summary.duration / 60);
+
+    // Price calculation
+    let baseKm, baseMin, minFare;
+
+    if (type === "van") {
+      baseKm = 2.08;
+      baseMin = 1;
+      minFare = 50;
+    } else if (type === "berline") {
+      baseKm = 1.8;
+      baseMin = 0.8;
+      minFare = 45;
+    } else {
+      return res.status(400).json({ error: "Type véhicule invalide" });
     }
-  </script>
-</body>
-</html>
+
+    let price = distanceKm * baseKm + durationMin * baseMin;
+
+    if (price < minFare) price = minFare;
+
+    res.json({
+      distanceKm: distanceKm.toFixed(2),
+      durationMin,
+      price: price.toFixed(2),
+    });
+
+  } catch (error) {
+    console.error("ORS error:", error.response?.data || error);
+    res.status(500).json({ error: "Erreur lors du calcul de l'itinéraire" });
+  }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("🚀 API opérationnelle sur le port", PORT));
