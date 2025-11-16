@@ -7,52 +7,56 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ROUTE : CALCULER DISTANCE + DUREE
+const ORS_KEY = process.env.ORS_API_KEY;
+
+// Fonction pour obtenir les coordonnées avec ORS geocoding
+async function geocode(address) {
+    const url = `https://api.openrouteservice.org/geocode/search`;
+    const response = await axios.get(url, {
+        params: { text: address },
+        headers: { Authorization: ORS_KEY }
+    });
+
+    if (!response.data.features || response.data.features.length === 0) return null;
+
+    return response.data.features[0].geometry.coordinates; // [lon, lat]
+}
+
 app.post("/api/calc-distance", async (req, res) => {
     const { start, end } = req.body;
 
-    if (!start || !end) {
-        return res.status(400).json({ error: "Champs manquants" });
-    }
-
     try {
-        const ORS_API = process.env.ORS_API_KEY;
-
-        // Étape 1 : Geocoding (convertir adresse → coordonnées)
-        const geoStart = await axios.get(
-            `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API}&text=${encodeURIComponent(start)}`
-        );
-        const geoEnd = await axios.get(
-            `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API}&text=${encodeURIComponent(end)}`
-        );
-
-        const startCoords = geoStart.data.features[0]?.geometry?.coordinates;
-        const endCoords = geoEnd.data.features[0]?.geometry?.coordinates;
+        const startCoords = await geocode(start);
+        const endCoords = await geocode(end);
 
         if (!startCoords || !endCoords) {
-            return res.status(500).json({ error: "Adresse introuvable" });
+            return res.status(400).json({ error: "Adresse non trouvée" });
         }
 
-        // Étape 2 : Directions (distance + durée)
-        const route = await axios.post(
+        const response = await axios.post(
             "https://api.openrouteservice.org/v2/directions/driving-car",
             { coordinates: [startCoords, endCoords] },
-            { headers: { Authorization: ORS_API, "Content-Type": "application/json" } }
+            {
+                headers: {
+                    Authorization: ORS_KEY,
+                    "Content-Type": "application/json"
+                }
+            }
         );
 
-        const data = route.data.features[0].properties.summary;
+        const distanceMeters = response.data.features[0].properties.summary.distance;
+        const durationSeconds = response.data.features[0].properties.summary.duration;
 
-        res.json({
-            distanceKm: (data.distance / 1000).toFixed(2),
-            durationMin: Math.round(data.duration / 60)
+        return res.json({
+            distanceKm: (distanceMeters / 1000).toFixed(2),
+            durationMin: Math.round(durationSeconds / 60)
         });
 
-    } catch (error) {
-        console.log("Erreur serveur :", error.response?.data || error);
-        res.status(500).json({ error: "Erreur lors du calcul" });
+    } catch (err) {
+        console.error("Erreur serveur :", err?.response?.data || err);
+        res.status(500).json({ error: "Erreur interne API" });
     }
 });
 
-// SERVER LAUNCH
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Serveur opérationnel sur port ${PORT}`));
+app.listen(PORT, () => console.log("API opérationnelle sur le port " + PORT));
